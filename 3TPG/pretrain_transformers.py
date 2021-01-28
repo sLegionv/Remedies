@@ -403,7 +403,9 @@ class Arguments:
           per_gpu_eval_batch_size=1, gradient_accumulation_steps=1, learning_rate=2e-5, weight_decay=0.01,
           adam_epsilon=1e-8, max_grad_norm=1.0, num_train_epochs=1.0, max_steps=-1, warmup_steps=0, logging_steps=500,
           save_steps=500, save_total_limit=None, eval_all_checkpoints=False, no_cuda=False, overwrite_output_dir=False,
-          overwrite_cache=False, seed=42, fp16=False, fp16_opt_level="O1", local_rank=-1, server_ip="", server_port=""):
+          overwrite_cache=False, seed=42, fp16=False, fp16_opt_level="O1", local_rank=-1, server_ip="", server_port="",
+          use_token_answer=False):
+
         self.output_dir = output_dir
         self.model_type = model_type
         self.model_name_or_path = model_name_or_path
@@ -442,19 +444,23 @@ class Arguments:
         self.fp16 = fp16
         self.fp16_opt_level = fp16_opt_level
         self.local_rank = local_rank
+
+        self.use_token_answer = use_token_answer
+
         self.server_ip = server_ip
         self.server_port = server_port
         self.n_gpu = 0
         self.device = None
 
 
-def train_transformers(output_dir, model_type, model_name_or_path, train_data, eval_data, should_continue=False,
+def main(output_dir, model_type, model_name_or_path, train_data, eval_data, should_continue=False,
           mlm=False, mlm_probability=0.15, config_name=None, tokenizer_name=None, cache_dir=None,
           block_size=-1, do_train=False, do_eval=False, evaluate_during_training=False, per_gpu_train_batch_size=1,
           per_gpu_eval_batch_size=1, gradient_accumulation_steps=1, learning_rate=2e-5, weight_decay=0.01,
           adam_epsilon=1e-8, max_grad_norm=1.0, num_train_epochs=1.0, max_steps=-1, warmup_steps=0, logging_steps=500,
           save_steps=500, save_total_limit=None, eval_all_checkpoints=False, no_cuda=False, overwrite_output_dir=False,
-          overwrite_cache=False, seed=42, fp16=False, fp16_opt_level="O1", local_rank=-1, server_ip="", server_port=""):
+          overwrite_cache=False, seed=42, fp16=False, fp16_opt_level="O1", local_rank=-1, server_ip="", server_port="",
+          use_token_answer=False):
 
     # train_data help="The input training data file (a text file)."
     # output_dir help="The output directory where the model predictions and checkpoints will be written."
@@ -518,7 +524,8 @@ def train_transformers(output_dir, model_type, model_name_or_path, train_data, e
                      per_gpu_eval_batch_size, gradient_accumulation_steps, learning_rate, weight_decay,
                      adam_epsilon, max_grad_norm, num_train_epochs, max_steps, warmup_steps, logging_steps,
                      save_steps, save_total_limit, eval_all_checkpoints, no_cuda, overwrite_output_dir,
-                     overwrite_cache, seed, fp16, fp16_opt_level, local_rank, server_ip, server_port)
+                     overwrite_cache, seed, fp16, fp16_opt_level, local_rank, server_ip, server_port,
+                     use_token_answer=use_token_answer)
 
     if args.model_type in ["bert", "roberta", "distilbert", "camembert"] and not args.mlm:
         raise ValueError(
@@ -705,4 +712,4 @@ def train_transformers(output_dir, model_type, model_name_or_path, train_data, e
 
 
 if __name__ == "__main__":
-    start()
+    main()
