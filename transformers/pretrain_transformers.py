@@ -455,7 +455,7 @@ class Arguments:
 
 def main(output_dir, model_type, model_name_or_path, train_data, eval_data, should_continue=False,
           mlm=False, mlm_probability=0.15, config_name=None, tokenizer_name=None, cache_dir=None,
-          block_size=-1, do_train=False, do_eval=False, evaluate_during_training=False, per_gpu_train_batch_size=1,
+          block_size=-1, do_train=True, do_eval=False, evaluate_during_training=False, per_gpu_train_batch_size=1,
           per_gpu_eval_batch_size=1, gradient_accumulation_steps=1, learning_rate=2e-5, weight_decay=0.01,
           adam_epsilon=1e-8, max_grad_norm=1.0, num_train_epochs=1.0, max_steps=-1, warmup_steps=0, logging_steps=500,
           save_steps=500, save_total_limit=None, eval_all_checkpoints=False, no_cuda=False, overwrite_output_dir=False,
