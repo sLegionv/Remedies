@@ -453,7 +453,7 @@ class Arguments:
         self.device = None
 
 
-def main(output_dir, model_type, model_name_or_path, train_data, eval_data, should_continue=False,
+def train_transformers(output_dir, model_type, model_name_or_path, train_data, eval_data, should_continue=False,
           mlm=False, mlm_probability=0.15, config_name=None, tokenizer_name=None, cache_dir=None,
           block_size=-1, do_train=True, do_eval=False, evaluate_during_training=False, per_gpu_train_batch_size=1,
           per_gpu_eval_batch_size=1, gradient_accumulation_steps=1, learning_rate=2e-5, weight_decay=0.01,
