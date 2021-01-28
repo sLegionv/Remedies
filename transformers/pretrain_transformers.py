@@ -709,7 +709,3 @@ def main(output_dir, model_type, model_name_or_path, train_data, eval_data, shou
             results.update(result)
 
     return results
-
-
-if __name__ == "__main__":
-    main()
