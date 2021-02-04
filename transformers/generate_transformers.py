@@ -238,3 +238,5 @@ def generate(model_type, model_name_or_path, prompt="", length=20, stop_token="<
             break
 
     return generated_sequences
+
+
