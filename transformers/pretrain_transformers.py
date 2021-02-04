@@ -47,11 +47,10 @@ from transformers import (
 
 
 class MaskingTokens:
-    def __init__(self, tokenizer, mask_probability, same_probability, rnd_probability):
+    def __init__(self, tokenizer, mask_probability, rnd_probability):
         self.tokenizer = tokenizer
         self.mask_probability = mask_probability
-        self.same_probability = same_probability
-        self.rnd_probability = rnd_probability
+        self.rnd_probability = rnd_probability / (1 - self.mask_probability)
 
     def default_masking(self, tokens, probability_matrix):
         labels = tokens.clone()
@@ -59,11 +58,11 @@ class MaskingTokens:
         labels[~masked_indices] = -100  # We only compute loss on masked tokens
 
         # 80% of the time, we replace masked input tokens with tokenizer.mask_token ([MASK])
-        indices_replaced = torch.bernoulli(torch.full(labels.shape, 0.8)).bool() & masked_indices
+        indices_replaced = torch.bernoulli(torch.full(labels.shape, self.mask_probability)).bool() & masked_indices
         tokens[indices_replaced] = self.tokenizer.convert_tokens_to_ids(self.tokenizer.mask_token)
 
         # 10% of the time, we replace masked input tokens with random word
-        indices_random = torch.bernoulli(torch.full(labels.shape, 0.5)).bool() & masked_indices & ~indices_replaced
+        indices_random = torch.bernoulli(torch.full(labels.shape, self.rnd_probability)).bool() & masked_indices & ~indices_replaced
         random_words = torch.randint(len(self.tokenizer), labels.shape, dtype=torch.long)
         tokens[indices_random] = random_words[indices_random]
 
@@ -251,7 +250,7 @@ class PdTextDatasetTokenAnswerWords(PdTextDataset):
 
 
 def load_and_cache_examples(args, tokenizer, evaluate=False):
-    masking_tokens = MaskingTokens(tokenizer, args.mask_probability, args.same_probability, args.rnd_probability)
+    masking_tokens = MaskingTokens(tokenizer, args.mask_probability, args.rnd_probability)
     file = args.eval_data if evaluate else args.train_data
     if args.use_token_answer:
         args.func_masking_tokens = masking_tokens.default_masking
@@ -588,7 +587,6 @@ class Arguments:
                  overwrite_cache=False, seed=42, fp16=False, fp16_opt_level="O1", local_rank=-1, server_ip="",
                  server_port="",
                  mask_probability=0.8,
-                 same_probability=0.1,
                  rnd_probability=0.1,
                  use_answer=False,
                  user_words=False,
@@ -633,7 +631,6 @@ class Arguments:
         self.local_rank = local_rank
 
         self.mask_probability = mask_probability
-        self.same_probability = same_probability
         self.rnd_probability = rnd_probability
 
         self.use_token_answer = use_answer
@@ -658,7 +655,7 @@ def train_transformers(output_dir, model_type, model_name_or_path, train_data, e
                        overwrite_output_dir=False,
                        overwrite_cache=False, seed=42, fp16=False, fp16_opt_level="O1", local_rank=-1, server_ip="",
                        server_port="",
-                       mask_probability=0.8, same_probability=0.1, rnd_probability=0.1,
+                       mask_probability=0.8, rnd_probability=0.1,
                        use_answer=False,
                        user_words=False,
                        use_answer_words=False):
@@ -726,7 +723,6 @@ def train_transformers(output_dir, model_type, model_name_or_path, train_data, e
                      save_steps, save_total_limit, eval_all_checkpoints, no_cuda, overwrite_output_dir,
                      overwrite_cache, seed, fp16, fp16_opt_level, local_rank, server_ip, server_port,
                      mask_probability=mask_probability,
-                     same_probability=same_probability,
                      rnd_probability=rnd_probability,
                      use_answer=use_answer, user_words=user_words, use_answer_words=use_answer_words)
 
