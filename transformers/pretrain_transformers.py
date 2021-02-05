@@ -329,7 +329,7 @@ def train(args, train_dataset, model: PreTrainedModel, tokenizer: PreTrainedToke
     if args.local_rank in [-1, 0]:
         tb_writer = SummaryWriter()
 
-    args.train_batch_size = args.per_gpu_train_batch_size * max(1, args.n_gpu)
+    args.train_batch_size = args.batch_size * max(1, args.n_gpu)
 
     def collate(examples: List[torch.Tensor]):
         if tokenizer._pad_token is None:
@@ -337,9 +337,11 @@ def train(args, train_dataset, model: PreTrainedModel, tokenizer: PreTrainedToke
         return pad_sequence(examples, batch_first=True, padding_value=tokenizer.pad_token_id)
 
     train_sampler = RandomSampler(train_dataset) if args.local_rank == -1 else DistributedSampler(train_dataset)
+    print(train_sampler)
     train_dataloader = DataLoader(
         train_dataset, sampler=train_sampler, batch_size=args.train_batch_size, collate_fn=collate
     )
+    print(train_dataloader)
 
     if args.max_steps > 0:
         t_total = args.max_steps
@@ -395,7 +397,7 @@ def train(args, train_dataset, model: PreTrainedModel, tokenizer: PreTrainedToke
     logger.info("***** Running training *****")
     logger.info("  Num examples = %d", len(train_dataset))
     logger.info("  Num Epochs = %d", args.num_train_epochs)
-    logger.info("  Instantaneous batch size per GPU = %d", args.per_gpu_train_batch_size)
+    logger.info("  Instantaneous batch size per GPU = %d", args.batch_size)
     logger.info(
         "  Total train batch size (w. parallel, distributed & accumulation) = %d",
         args.train_batch_size
@@ -433,6 +435,7 @@ def train(args, train_dataset, model: PreTrainedModel, tokenizer: PreTrainedToke
     set_seed(args)  # Added here for reproducibility
     for _ in train_iterator:
         epoch_iterator = tqdm(train_dataloader, desc="Iteration", disable=args.local_rank not in [-1, 0])
+        print(epoch_iterator)
         for step, batch in enumerate(epoch_iterator):
 
             # Skip past any already trained steps if resuming training
@@ -523,7 +526,7 @@ def evaluate(args, model: PreTrainedModel, tokenizer: PreTrainedTokenizer, prefi
     if args.local_rank in [-1, 0]:
         os.makedirs(eval_output_dir, exist_ok=True)
 
-    args.eval_batch_size = args.per_gpu_eval_batch_size * max(1, args.n_gpu)
+    args.batch_size = args.batch_size * max(1, args.n_gpu)
 
     # Note that DistributedSampler samples randomly
 
@@ -534,7 +537,7 @@ def evaluate(args, model: PreTrainedModel, tokenizer: PreTrainedTokenizer, prefi
 
     eval_sampler = SequentialSampler(eval_dataset)
     eval_dataloader = DataLoader(
-        eval_dataset, sampler=eval_sampler, batch_size=args.eval_batch_size, collate_fn=collate
+        eval_dataset, sampler=eval_sampler, batch_size=args.batch_size, collate_fn=collate
     )
 
     # multi-gpu evaluate
@@ -544,7 +547,7 @@ def evaluate(args, model: PreTrainedModel, tokenizer: PreTrainedTokenizer, prefi
     # Eval!
     logger.info("***** Running evaluation {} *****".format(prefix))
     logger.info("  Num examples = %d", len(eval_dataset))
-    logger.info("  Batch size = %d", args.eval_batch_size)
+    logger.info("  Batch size = %d", args.batch_size)
     eval_loss = 0.0
     nb_eval_steps = 0
     model.eval()
@@ -579,8 +582,7 @@ class Arguments:
     def __init__(self, output_dir, model_type, model_name_or_path, train_data, eval_data, should_continue=False,
                  mlm=False, mlm_probability=0.15, config_name=None, tokenizer_name=None, cache_dir=None,
                  block_size=-1, do_train=False, do_eval=False, evaluate_during_training=False,
-                 per_gpu_train_batch_size=1,
-                 per_gpu_eval_batch_size=1, gradient_accumulation_steps=1, learning_rate=2e-5, weight_decay=0.01,
+                 batch_size=1, gradient_accumulation_steps=1, learning_rate=2e-5, weight_decay=0.01,
                  adam_epsilon=1e-8, max_grad_norm=1.0, num_train_epochs=1.0, max_steps=-1, warmup_steps=0,
                  logging_steps=500,
                  save_steps=500, save_total_limit=None, eval_all_checkpoints=False, no_cuda=False,
@@ -607,10 +609,7 @@ class Arguments:
         self.do_train = do_train
         self.do_eval = do_eval
         self.evaluate_during_training = evaluate_during_training
-        self.per_gpu_train_batch_size = per_gpu_train_batch_size
-        self.train_batch_size = per_gpu_train_batch_size
-        self.per_gpu_eval_batch_size = per_gpu_eval_batch_size
-        self.eval_batch_size = per_gpu_eval_batch_size
+        self.batch_size = batch_size
         self.gradient_accumulation_steps = gradient_accumulation_steps
         self.learning_rate = learning_rate
         self.weight_decay = weight_decay
@@ -648,8 +647,7 @@ class Arguments:
 def train_transformers(output_dir, model_type, model_name_or_path, train_data, eval_data, should_continue=False,
                        mlm=False, mlm_probability=0.15, config_name=None, tokenizer_name=None, cache_dir=None,
                        block_size=-1, do_train=True, do_eval=False, evaluate_during_training=False,
-                       per_gpu_train_batch_size=1,
-                       per_gpu_eval_batch_size=1, gradient_accumulation_steps=1, learning_rate=2e-5, weight_decay=0.01,
+                       batch_size=1, gradient_accumulation_steps=1, learning_rate=2e-5, weight_decay=0.01,
                        adam_epsilon=1e-8, max_grad_norm=1.0, num_train_epochs=1.0, max_steps=-1, warmup_steps=0,
                        logging_steps=500,
                        save_steps=500, save_total_limit=None, eval_all_checkpoints=False, no_cuda=False,
@@ -718,8 +716,8 @@ def train_transformers(output_dir, model_type, model_name_or_path, train_data, e
 
     args = Arguments(output_dir, model_type, model_name_or_path, train_data, eval_data, should_continue,
                      mlm, mlm_probability, config_name, tokenizer_name, cache_dir,
-                     block_size, do_train, do_eval, evaluate_during_training, per_gpu_train_batch_size,
-                     per_gpu_eval_batch_size, gradient_accumulation_steps, learning_rate, weight_decay,
+                     block_size, do_train, do_eval, evaluate_during_training, batch_size,
+                     gradient_accumulation_steps, learning_rate, weight_decay,
                      adam_epsilon, max_grad_norm, num_train_epochs, max_steps, warmup_steps, logging_steps,
                      save_steps, save_total_limit, eval_all_checkpoints, no_cuda, overwrite_output_dir,
                      overwrite_cache, seed, fp16, fp16_opt_level, local_rank, server_ip, server_port,
