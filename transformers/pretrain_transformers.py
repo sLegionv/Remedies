@@ -125,7 +125,7 @@ class PdTextDataset(ABC, Dataset):
         self.fit_transform()
 
     def fit_transform(self):
-        transformed_data = [self.transform_data(data_unit) for data_unit in self.data]
+        transformed_data = [self.transform_data(data_unit[1]) for data_unit in self.data.iterrows()]
         tokens_data = self.tokenizer.batch_encode_plus(transformed_data, add_special_tokens=False,
                                                        max_length=self.block_size)["input_ids"]
         for tokens_data_unit in tokens_data:
