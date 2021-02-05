@@ -79,7 +79,6 @@ class TransformData:
 
     def transform_token_answer(self, data):
         question, answer = data.question, data.answer
-        print("".join([self.token_cls, question, self.token_sep, answer, self.token_sep]))
         return "".join([self.token_cls, question, self.token_sep, answer, self.token_sep])
 
     def transform_token_words(self, data):
@@ -127,7 +126,6 @@ class PdTextDataset(ABC, Dataset):
 
     def fit_transform(self):
         transformed_data = [self.transform_data(data_unit[1]) for data_unit in self.data.iterrows()]
-        print(transformed_data)
         tokens_data = self.tokenizer.batch_encode_plus(transformed_data, add_special_tokens=False,
                                                        max_length=self.block_size)["input_ids"]
         for tokens_data_unit in tokens_data:
@@ -172,7 +170,7 @@ class PdTextDatasetTokensAnswer(PdTextDataset):
         super(PdTextDatasetTokensAnswer, self).__init__(tokenizer, data, mlm_probability, block_size)
 
     def transform_data(self, data_unit):
-        transforms_data.transform_token_answer(data_unit)
+        return transforms_data.transform_token_answer(data_unit)
 
     def transform_tokens(self, tokens_unit):
         index_first_token_sep = tokens_unit.index(transforms_data.token_sep)
