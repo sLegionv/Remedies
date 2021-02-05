@@ -146,7 +146,7 @@ class PdTextDataset(ABC, Dataset):
         return len(self.tokens)
 
     def __getitem__(self, i):
-        return self.tokens[i], self.masks[i]
+        return torch.Tensor([self.tokens[i], self.masks[i]])
 
 
 class PdTextDatasetDefault(PdTextDataset):
@@ -317,7 +317,7 @@ def mask_tokens(inputs: torch.Tensor, tokenizer: PreTrainedTokenizer, args) -> T
         )
     inputs, labels = torch.empty(inputs.shape), torch.empty(inputs.shape)
     for i, input_data in enumerate(inputs):
-        tokens, probability_matrix = input_data
+        tokens, probability_matrix = input_data[0], input_data[1]
         tokens, labels_unit = args.func_masking_tokens(tokens, probability_matrix)
         inputs[i] = tokens
         labels[i] = labels_unit
