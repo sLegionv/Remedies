@@ -78,6 +78,7 @@ class TransformData:
         self.bad_elements = list(string.punctuation) + ["...", self.token_cls, self.token_sep]
 
     def transform_token_answer(self, data):
+        print(data)
         question, answer = data.question, data.answer
         return "".join([self.token_cls, question, self.token_sep, answer, self.token_sep])
 
