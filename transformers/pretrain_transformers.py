@@ -122,6 +122,7 @@ class PdTextDataset(ABC, Dataset):
         self.mlm_probability = mlm_probability
         self.tokens = []
         self.masks = []
+        self.id_token_sep = 102
         self.fit_transform()
 
     def fit_transform(self):
@@ -173,7 +174,7 @@ class PdTextDatasetTokensAnswer(PdTextDataset):
         return transforms_data.transform_token_answer(data_unit)
 
     def transform_tokens(self, tokens_unit):
-        index_first_token_sep = tokens_unit.index(transforms_data.token_sep)
+        index_first_token_sep = tokens_unit.index(self.id_token_sep)
         tokens_unit = torch.tensor(tokens_unit, dtype=torch.long)
         probability_matrix = torch.full(tokens_unit.shape, self.mlm_probability)
 
