@@ -131,8 +131,8 @@ class PdTextDataset(ABC, Dataset):
                                                        max_length=self.block_size)["input_ids"]
         for tokens_data_unit in tokens_data:
             tokens_data_unit, mask = self.transform_tokens(tokens_data_unit)
-            self.tokens.append(tokens_data_unit)
-            self.masks.append(mask)
+            self.tokens.append(list(tokens_data_unit))
+            self.masks.append(list(mask))
 
     @abstractmethod
     def transform_data(self, data_unit):
