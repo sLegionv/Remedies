@@ -78,7 +78,6 @@ class TransformData:
         self.bad_elements = list(string.punctuation) + ["...", self.token_cls, self.token_sep]
 
     def transform_token_answer(self, data):
-        print(data)
         question, answer = data.question, data.answer
         return "".join([self.token_cls, question, self.token_sep, answer, self.token_sep])
 
@@ -127,6 +126,7 @@ class PdTextDataset(ABC, Dataset):
 
     def fit_transform(self):
         transformed_data = [self.transform_data(data_unit[1]) for data_unit in self.data.iterrows()]
+        print(transformed_data)
         tokens_data = self.tokenizer.batch_encode_plus(transformed_data, add_special_tokens=False,
                                                        max_length=self.block_size)["input_ids"]
         for tokens_data_unit in tokens_data:
